@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hastane Yönetim Paneli</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        /* ── NAVBAR ── */
+        .navbar {
+            background: linear-gradient(90deg, #1e40af, #1e3a8a);
+            color: white;
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .navbar-brand svg {
+            width: 36px;
+            height: 36px;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .nav-user {
+            font-size: 14px;
+            color: #bfdbfe;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .logout-btn:hover { background: rgba(255,255,255,0.25); }
+
+        /* ── TAB NAVİGASYON ── */
+        .tab-nav {
+            background: white;
+            border-bottom: 2px solid #e2e8f0;
+            padding: 0 32px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            padding: 16px 24px;
+            border: none;
+            background: none;
+            font-size: 15px;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover { color: #1e40af; }
+
+        .tab-btn.active {
+            color: #1e40af;
+            border-bottom-color: #1e40af;
+            font-weight: 600;
+        }
+
+        /* ── İÇERİK ── */
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ── ALERT ── */
+        .alert {
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            color: #15803d;
+        }
+
+        .alert-danger {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+        }
+
+        /* ── KART ── */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-header h2 {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .card-body { padding: 24px; }
+
+        /* ── HASTA EKLEME FORMU ── */
+        .add-form {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .add-form input {
+            flex: 1;
+            padding: 11px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .add-form input:focus { border-color: #2563eb; }
+
+        /* ── HASTA LİSTESİ ── */
+        .patient-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 480px;
+            overflow-y: auto;
+        }
+
+        .patient-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+            transition: background 0.15s;
+        }
+
+        .patient-item:hover { background: #eff6ff; }
+
+        .patient-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .patient-num {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2563eb;
+            min-width: 40px;
+        }
+
+        .patient-name {
+            font-size: 16px;
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        /* ── BUTONLAR ── */
+        .btn {
+            padding: 9px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover { opacity: 0.85; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-danger  { background: #dc2626; color: white; }
+        .btn-success { background: #16a34a; color: white; }
+        .btn-warning { background: #d97706; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+        /* ── ÇAĞIR BUTONU ── */
+        .call-btn-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #call-btn {
+            font-size: 15px;
+            padding: 10px 22px;
+            background: linear-gradient(90deg, #16a34a, #15803d);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: opacity 0.2s, background 0.3s;
+            box-shadow: 0 2px 8px rgba(22,163,74,0.3);
+        }
+
+        #call-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* ── EKRANLAR ── */
+        .screen-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 24px;
+        }
+
+        .screen-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .screen-card-header {
+            padding: 16px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .screen-card-header.yemekhane { background: linear-gradient(90deg, #ea580c, #fb923c); }
+        .screen-card-header.duyuru    { background: linear-gradient(90deg, #7c3aed, #a855f7); }
+        .screen-card-header.otobus    { background: linear-gradient(90deg, #16a34a, #22c55e); }
+
+        .screen-card-body { padding: 20px; }
+
+        .row-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .row-item input {
+            flex: 1;
+            padding: 9px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .row-item input:focus { border-color: #2563eb; }
+        .row-item input.narrow { flex: 0 0 100px; }
+
+        /* ── AYARLAR GRID ── */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .setting-item label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .setting-item input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .setting-item input:focus { border-color: #2563eb; }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 24px 0 14px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .section-title:first-child { margin-top: 0; }
+
+        /* ── FORM FOOTER ── */
+        .form-footer {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        /* ── SCROLLBAR ── */
+        .patient-list::-webkit-scrollbar { width: 6px; }
+        .patient-list::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+        .patient-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <svg viewBox="0 0 100 100" fill="none">
+                <circle cx="50" cy="50" r="48" fill="white" opacity="0.95"/>
+                <rect x="35" y="20" width="30" height="60" rx="3" fill="#2563eb"/>
+                <rect x="20" y="35" width="60" height="30" rx="3" fill="#2563eb"/>
+            </svg>
+            Hastane Yönetim Paneli
+        </div>
+        <div class="navbar-right">
+            <span class="nav-user">👤 {{ user.full_name }}</span>
+            <a href="/logout" class="logout-btn">🚪 Çıkış</a>
+        </div>
+    </nav>
+
+    <!-- TAB NAVİGASYON -->
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('queue', this)">
+            🏥 Hasta Sırası
+        </button>
+        <button class="tab-btn" onclick="switchTab('screens', this)">
+            📺 Ekran İçerikleri
+        </button>
+        <button class="tab-btn" onclick="switchTab('settings', this)">
+            ⚙️ Ayarlar
+        </button>
+    </div>
+
+    <div class="content">
+
+        <!-- FLASH MESAJLARI -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <!-- ═══════════════════════════════════ -->
+        <!-- TAB 1: HASTA SIRASI                -->
+        <!-- ═══════════════════════════════════ -->
+        <div id="tab-queue" class="tab-panel active">
+            <div class="card">
+                <div class="card-header">
+                    <h2>🏥 Hasta Sırası Yönetimi</h2>
+                    <div class="call-btn-wrap">
+                        <span class="badge" id="patient-count">{{ patients|length }} Hasta</span>
+                        <button id="call-btn" onclick="callNextPatient()">
+                            📢 Sıradakini Çağır
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+
+                    <!-- Hasta Ekle -->
+                    <form method="POST" action="/admin/patient/add">
+                        <div class="add-form">
+                            <input type="text" name="isim"
+                                   placeholder="Hasta adı soyadı girin..."
+                                   required>
+                            <button type="submit" class="btn btn-primary">
+                                ➕ Sıraya Ekle
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Hasta Listesi -->
+                    <div class="patient-list">
+                        {% if patients %}
+                            {% for patient in patients %}
+                            <div class="patient-item">
+                                <div class="patient-info">
+                                    <div class="patient-num">{{ patient.sira }}</div>
+                                    <div class="patient-name">{{ patient.isim }}</div>
+                                </div>
+                                <form method="POST"
+                                      action="/admin/patient/delete/{{ patient.id }}"
+                                      onsubmit="return confirm('{{ patient.isim }} silinsin mi?')">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        🗑️ Sil
+                                    </button>
+                                </form>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div style="text-align:center; color:#94a3b8; padding:40px;">
+                                Sırada hasta bulunmuyor.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════ -->
+        <!-- TAB 2: EKRAN İÇERİKLERİ           -->
+        <!-- ═══════════════════════════════════ -->
+        <div id="tab-screens" class="tab-panel">
+            <div class="screen-cards">
+                {% for screen in screens %}
+                <div class="screen-card">
+                    <div class="screen-card-header {{ screen.type }}">
+                        {% if screen.type == 'yemekhane' %}🍽️
+                        {% elif screen.type == 'duyuru' %}📢
+                        {% elif screen.type == 'otobus' %}🚌
+                        {% endif %}
+                        {{ screen.title }}
+                    </div>
+                    <div class="screen-card-body">
+                        <form method="POST"
+                              action="/admin/screen/edit/{{ screen.id }}">
+
+                            <!-- Başlık -->
+                            <div style="margin-bottom:16px;">
+                                <label style="font-size:13px; font-weight:600;
+                                              color:#64748b; display:block; margin-bottom:6px;">
+                                    Başlık
+                                </label>
+                                <input type="text" name="title"
+                                       value="{{ screen.title }}"
+                                       style="width:100%; padding:9px 12px;
+                                              border:1px solid #e2e8f0;
+                                              border-radius:6px; font-size:14px; outline:none;">
+                            </div>
+
+                            <!-- Yemekhane -->
+                            {% if screen.type == 'yemekhane' %}
+                                {% for item in screen.content %}
+                                <div class="row-item">
+                                    <input type="text" name="day[]"
+                                           value="{{ item.day }}"
+                                           class="narrow"
+                                           placeholder="Gün">
+                                    <input type="text" name="meal[]"
+                                           value="{{ item.meal }}"
+                                           placeholder="Yemek listesi">
+                                </div>
+                                {% endfor %}
+
+                            <!-- Duyuru -->
+                            {% elif screen.type == 'duyuru' %}
+                                {% for item in screen.content %}
+                                <div class="row-item" style="flex-direction:column; align-items:stretch;">
+                                    <input type="text" name="ann_title[]"
+                                           value="{{ item.title }}"
+                                           placeholder="Başlık"
+                                           style="margin-bottom:6px;">
+                                    <input type="text" name="ann_text[]"
+                                           value="{{ item.text }}"
+                                           placeholder="İçerik">
+                                </div>
+                                {% endfor %}
+
+                            <!-- Otobüs -->
+                            {% elif screen.type == 'otobus' %}
+                                {% for item in screen.content %}
+                                <div class="row-item">
+                                    <input type="text" name="time[]"
+                                           value="{{ item.time }}"
+                                           class="narrow"
+                                           placeholder="08:00">
+                                    <input type="text" name="route[]"
+                                           value="{{ item.route }}"
+                                           placeholder="Güzergah">
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+
+                            <div class="form-footer">
+                                <button type="submit" class="btn btn-success">
+                                    💾 Kaydet
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════ -->
+        <!-- TAB 3: AYARLAR                     -->
+        <!-- ═══════════════════════════════════ -->
+        <div id="tab-settings" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h2>⚙️ Sistem Ayarları</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="/admin/settings/update">
+
+                        <div class="section-title">🏥 Hastane Bilgileri</div>
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <label>Hastane Adı</label>
+                                <input type="text" name="hospital_name"
+                                       value="{{ settings.hospital_name }}">
+                            </div>
+                            <div class="setting-item">
+                                <label>Doktor Adı</label>
+                                <input type="text" name="doctor_name"
+                                       value="{{ settings.doctor_name }}">
+                            </div>
+                            <div class="setting-item">
+                                <label>Bölüm / Poliklinik</label>
+                                <input type="text" name="department"
+                                       value="{{ settings.department }}">
+                            </div>
+                        </div>
+
+                        <div class="section-title">💱 Döviz Kurları</div>
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <label>💵 Dolar (₺)</label>
+                                <input type="text" name="currency_usd"
+                                       value="{{ settings.currency_usd }}">
+                            </div>
+                            <div class="setting-item">
+                                <label>💶 Euro (₺)</label>
+                                <input type="text" name="currency_eur"
+                                       value="{{ settings.currency_eur }}">
+                            </div>
+                            <div class="setting-item">
+                                <label>🪙 Altın (₺)</label>
+                                <input type="text" name="currency_gold"
+                                       value="{{ settings.currency_gold }}">
+                            </div>
+                            <div class="setting-item">
+                                <label>⚪ Gümüş (₺)</label>
+                                <input type="text" name="currency_silver"
+                                       value="{{ settings.currency_silver }}">
+                            </div>
+                        </div>
+
+                        <div class="section-title">🌤️ Hava Durumu</div>
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <label>Sıcaklık (°C)</label>
+                                <input type="text" name="weather_temp"
+                                       value="{{ settings.weather_temp }}">
+                            </div>
+                            <div class="setting-item">
+                                <label>Durum</label>
+                                <input type="text" name="weather_desc"
+                                       value="{{ settings.weather_desc }}"
+                                       placeholder="Güneşli, Bulutlu...">
+                            </div>
+                        </div>
+
+                        <div class="form-footer">
+                            <button type="submit" class="btn btn-primary">
+                                💾 Tüm Ayarları Kaydet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /content -->
+
+    <script>
+        // ─── TAB GEÇİŞİ ──────────────────────────────
+        function switchTab(tab, el) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            el.classList.add('active');
+        }
+
+        // ─── FLASH MESAJLARI ──────────────────────────
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(a => {
+                a.style.transition = 'opacity 0.5s';
+                a.style.opacity = '0';
+                setTimeout(() => a.remove(), 500);
+            });
+        }, 4000);
+
+        // ─── HASTA ÇAĞIRMA ────────────────────────────
+        let isCalling = false;
+
+        async function callNextPatient() {
+            if (isCalling) return;
+
+            const btn = document.getElementById('call-btn');
+
+            try {
+                isCalling = true;
+                btn.disabled = true;
+                btn.textContent = '⏳ Çağrılıyor...';
+
+                const res = await fetch('/api/call/trigger', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    btn.textContent = '✅ ' + data.patient.isim + ' Çağrıldı!';
+                    btn.style.background = 'linear-gradient(90deg, #1d4ed8, #1e40af)';
+
+                    // 13 saniye sonra butonu serbest bırak
+                    // (Pi3 ekranı 12sn gösteriyor, 1sn tolerans)
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = '📢 Sıradakini Çağır';
+                        btn.style.background = '';
+                        isCalling = false;
+                        // Sayfayı yenile → hasta listesi güncellensin
+                        location.reload();
+                    }, 13000);
+
+                } else {
+                    alert('⚠️ ' + (data.error || 'Bir hata oluştu!'));
+                    btn.disabled = false;
+                    btn.textContent = '📢 Sıradakini Çağır';
+                    isCalling = false;
+                }
+
+            } catch (e) {
+                alert('🔴 Bağlantı hatası! Sunucu çalışıyor mu?');
+                btn.disabled = false;
+                btn.textContent = '📢 Sıradakini Çağır';
+                isCalling = false;
+            }
+        }
+    </script>
+</body>
+</html>

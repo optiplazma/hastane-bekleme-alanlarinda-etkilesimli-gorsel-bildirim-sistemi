@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Sanal ortam (asla yüklenmez)
+venv/
+env/
+.venv/
+pyvenv.cfg
+
+# Flask instance klasörü ve veritabanı
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Yedek dosyalar
+*.backup
+*_py.backup
+
+# Ortam değişkenleri (gizli bilgiler burada tutulur)
+.env
+
+# İşletim sistemi / editör dosyaları
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
